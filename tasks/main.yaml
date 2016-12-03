@@ -1,0 +1,46 @@
+---
+- service:
+   name: docker
+   state: started
+- file:
+    path: /opt/jjjPod
+    state: directory
+    recurse: yes
+    owner: tim
+    group: docker
+- copy:
+    src: Dockerfile
+    dest: /opt/jjjPod/
+- copy:
+    src: example/nginx-location.conf
+    dest: /opt/jjjPod/
+- copy:
+    src: uwsgi.ini
+    dest: /opt/jjjPod/
+- copy:
+    src: src
+    dest: /opt/jjjPod/
+
+# data container
+- docker:
+    image: alpine
+    name: jjjpod-nginx-data
+    state: restarted
+    pull: missing
+    volumes:
+      - "/opt/jjjPod/nginx-location.conf:/etc/nginx/locations.d/timcinel-jjjpod/location.conf"
+    command: /bin/true
+    net: timcinel
+
+# app container
+- shell: docker build -t timcinel/jjjpod:latest .
+  args:
+    chdir: /opt/jjjPod
+- docker:
+    image: timcinel/jjjpod
+    name: jjjpod
+    state: restarted
+    restart_policy: unless-stopped
+    pull: missing
+    memory_limit: 150000000
+    net: timcinel
