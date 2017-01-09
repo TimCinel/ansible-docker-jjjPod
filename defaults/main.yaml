@@ -1,0 +1,14 @@
+---
+jjjPod_user: jjjPod
+#jjjPod_uid - must be specified
+jjjPod_group: jjjPod
+#jjjPod_gid - must be specified
+jjjPod_build_dir: /opt/jjjPod
+jjjPod_docker_ingredients:
+ - Dockerfile
+ - example/nginx-location.conf
+ - uwsgi.ini
+ - src
+jjjPod_docker_image: "timcinel/jjjpod:latest"
+jjjPod_docker_network: bridge
+jjjPod_docker_memory_limit: 75000000

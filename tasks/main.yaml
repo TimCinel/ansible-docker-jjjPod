@@ -3,23 +3,20 @@
    name: docker
    state: started
 - file:
-    path: /opt/jjjPod
+    path: "{{ jjjPod_build_dir }}"
     state: directory
     recurse: yes
-    owner: tim
-    group: docker
+- group:
+    name: "{{ jjjPod_group }}"
+    gid: "{{ jjjPod_gid }}"
+- user:
+    name: "{{ jjjPod_user }}"
+    uid: "{{ jjjPod_uid }}"
+    group: "{{ jjjPod_group }}"
 - copy:
-    src: Dockerfile
-    dest: /opt/jjjPod/
-- copy:
-    src: example/nginx-location.conf
-    dest: /opt/jjjPod/
-- copy:
-    src: uwsgi.ini
-    dest: /opt/jjjPod/
-- copy:
-    src: src
-    dest: /opt/jjjPod/
+    src: "{{ item }}"
+    dest: "{{ jjjPod_build_dir }}"
+  with_items: "{{ jjjPod_docker_ingredients }}"
 
 # data container
 - docker:
@@ -28,19 +25,24 @@
     state: restarted
     pull: missing
     volumes:
-      - "/opt/jjjPod/nginx-location.conf:/etc/nginx/locations.d/timcinel-jjjpod/location.conf"
+      - "{{ jjjPod_build_dir }}/nginx-location.conf:/etc/nginx/locations.d/timcinel-jjjpod/location.conf"
     command: /bin/true
     net: timcinel
 
 # app container
-- shell: docker build -t timcinel/jjjpod:latest .
+- shell: "docker build -t {{ jjjPod_docker_image }} ."
   args:
-    chdir: /opt/jjjPod
+    chdir: "{{ jjjPod_build_dir }}"
 - docker:
-    image: timcinel/jjjpod
+    image: "{{ jjjPod_docker_image }}"
     name: jjjpod
     state: restarted
     restart_policy: unless-stopped
     pull: missing
-    memory_limit: 150000000
-    net: timcinel
+    memory_limit: "{{ jjjPod_docker_memory_limit }}"
+    net: "{{ jjjPod_docker_network }}"
+    env:
+      DOCKER_USER: "{{ jjjPod_user }}"
+      DOCKER_USER_ID: "{{ jjjPod_uid }}"
+      DOCKER_GROUP: "{{ jjjPod_group }}"
+      DOCKER_GROUP_ID: "{{ jjjPod_gid }}"
